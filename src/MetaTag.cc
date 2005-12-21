@@ -79,34 +79,8 @@ void cond::MetaData::addEntries(cond::MetaData::RecordToMetaDataMapIterator& beg
     throw cms::Exception("cond::MetaData::addMapping Could not commit the transaction");
   }
 }
-long cond::MetaData::numberOfEntriesInDB(){
-  return 0;
-}
-void cond::MetaData::setReadLimit(int limit, int offset){
-}
-cond::MetaData::RecordToMetaDataMap& cond::MetaData::fetchAllMapping(){
-  m_record2metadata.clear();
-  //fill the mapp here
-  return m_record2metadata;
-}
-void cond::MetaData::fetchOneMapping( std::vector<cond::IOVMetaDataEntry>& result ){
-  return;
-}
-void cond::MetaData::getMetaDataEntryByName(  const std::string& iovname, 
-					      cond::IOVMetaDataEntry& entry ){
-  
-}
-void cond::MetaData::getAllRecordNames( std::vector<std::string>& records ){
-  
-}
-void cond::MetaData::deleteEntry(const std::string& iovname ){
-  
-}
-void cond::MetaData::deleteRecord(const std::string& recordname ){
-  
-}
-void cond::MetaData::createTable(){
-}
+
+const std::string cond::MetaData::getToken( const std::string& name ){
   (*m_log)<<seal::Msg::Debug<<"cond::MetaData::getToken "<<name<<seal::flush;
   if ( ! m_session->transaction().start() ) {
     throw cms::Exception( "cond::MetaData::getToken: Could not start a new transaction" );
