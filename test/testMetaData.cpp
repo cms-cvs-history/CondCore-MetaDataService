@@ -38,6 +38,7 @@ int main(){
 	       alltags.end(),
 	       std::ostream_iterator<std::string>(std::cout,"\n")
 	       );
+    metadata_svc.deleteAllEntries();
     metadata_svc.disconnect();
   }catch(cond::Exception& er){
     std::cout<<er.what()<<std::endl;

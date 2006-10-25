@@ -33,12 +33,14 @@ cond::MetaData::MetaData(const std::string& connectionString, cond::ServiceLoade
   m_service=&(m_loader.loadRelationalService());
   m_session=0;
   m_mode=cond::ReadWriteCreate;
-}
-cond::MetaData::~MetaData(){
-}
-void cond::MetaData::connect( cond::ConnectMode mod ){
   coral::IRelationalDomain& domain = m_service->domainForConnection(m_con);
   m_session=domain.newSession( m_con ) ;
+}
+cond::MetaData::~MetaData(){
+  delete m_session;
+  m_session=0;
+}
+void cond::MetaData::connect( cond::ConnectMode mod ){
   m_mode=mod;
   try{
     if( m_mode == cond::ReadOnly){
@@ -54,15 +56,24 @@ void cond::MetaData::connect( cond::ConnectMode mod ){
   }
 }
 void cond::MetaData::disconnect(){
+  m_session->endUserSession();
   m_session->disconnect();
-  delete m_session;
-  m_session=0;
 }
 bool cond::MetaData::addMapping(const std::string& name, const std::string& iovtoken){
+  /*if(!m_session->nominalSchema().existsTable(cond::MetaDataNames::metadataTable())){
+    std::cout<<"table doesn't exist"<<std::endl;
+    this->createTable(cond::MetaDataNames::metadataTable());
+    std::cout<<"table created"<<std::endl;
+    }
+  */
   try{
     m_session->transaction().start(false);
-    if(!m_session->nominalSchema().existsTable(cond::MetaDataNames::metadataTable())){
-      this->createTable(cond::MetaDataNames::metadataTable());
+    try{
+      this->createTable( cond::MetaDataNames::metadataTable() );
+    }catch( const coral::TableAlreadyExistingException& er ){
+      //std::cout<<"table alreay existing, not creating a new one"<<std::endl;
+    }catch(...){
+      throw;
     }
     coral::ITable& mytable=m_session->nominalSchema().tableHandle(cond::MetaDataNames::metadataTable());
     coral::AttributeList rowBuffer;
@@ -72,7 +83,7 @@ bool cond::MetaData::addMapping(const std::string& name, const std::string& iovt
     rowBuffer[cond::MetaDataNames::tokenColumn()].data<std::string>()=iovtoken;
     dataEditor.insertRow( rowBuffer );
     m_session->transaction().commit() ;
-  }catch( coral::DuplicateEntryInUniqueKeyException& er ){
+  }catch( const coral::DuplicateEntryInUniqueKeyException& er ){
     m_session->transaction().rollback() ;
     throw cond::MetaDataDuplicateEntryException("addMapping",name);
   }catch(std::exception& er){
@@ -217,5 +228,68 @@ void cond::MetaData::listAllTags( std::vector<std::string>& result ) const{
   }catch(...){
     m_session->transaction().rollback() ;
     throw cond::Exception( "MetaData::listAllTag: unknown exception ");
+  }
+}
+void cond::MetaData::deleteAllEntries(){
+  coral::AttributeList emptybinddata;
+  try{
+    m_session->transaction().start(false);
+    coral::ITable& table=m_session->nominalSchema().tableHandle(cond::MetaDataNames::metadataTable());
+    coral::ITableDataEditor& dataEditor = table.dataEditor();
+    dataEditor.deleteRows( "",emptybinddata ); 
+    m_session->transaction().commit();
+  }catch(const coral::TableNotExistingException& er){
+    m_session->transaction().rollback();
+    return;
+  }catch(const std::exception& er){
+    m_session->transaction().rollback() ;
+    throw cond::Exception( std::string("MetaData::deleteAllEntries: " )+er.what() );
+  }catch(...){
+    m_session->transaction().rollback() ;
+    throw cond::Exception( "MetaData::deleteAllEntries: unknown exception ");
+  }
+}
+void cond::MetaData::deleteEntryByToken( const std::string& token ){
+  coral::AttributeList deletecondition;
+  deletecondition.extend( cond::MetaDataNames::tokenColumn(), typeid(std::string) );
+  deletecondition[cond::MetaDataNames::tokenColumn()].data<std::string>()=token;
+  std::string whereClause=cond::MetaDataNames::tokenColumn()+"=:"+cond::MetaDataNames::tokenColumn();
+  try{
+    m_session->transaction().start(false);
+    coral::ITable& table=m_session->nominalSchema().tableHandle(cond::MetaDataNames::metadataTable());
+    coral::ITableDataEditor& dataEditor = table.dataEditor();
+    dataEditor.deleteRows(whereClause,deletecondition ); 
+    m_session->transaction().commit();
+  }catch(const coral::TableNotExistingException& er){
+    m_session->transaction().rollback();
+    return;
+  }catch(const std::exception& er){
+    m_session->transaction().rollback() ;
+    throw cond::Exception( std::string("MetaData::deleteEntryByToken: " )+er.what() );
+  }catch(...){
+    m_session->transaction().rollback() ;
+    throw cond::Exception( "MetaData::deleteEntryByToken: unknown exception ");
+  }
+}
+void cond::MetaData::deleteEntryByTag( const std::string& tag ){
+  coral::AttributeList deletecondition;
+  deletecondition.extend( cond::MetaDataNames::tagColumn(), typeid(std::string) );
+  deletecondition[cond::MetaDataNames::tagColumn()].data<std::string>()=tag;
+  std::string whereClause=cond::MetaDataNames::tagColumn()+"=:"+cond::MetaDataNames::tagColumn();
+  try{
+    m_session->transaction().start(false);
+    coral::ITable& table=m_session->nominalSchema().tableHandle(cond::MetaDataNames::metadataTable());
+    coral::ITableDataEditor& dataEditor = table.dataEditor();
+    dataEditor.deleteRows(whereClause,deletecondition ); 
+    m_session->transaction().commit();
+  }catch(const coral::TableNotExistingException& er){
+    m_session->transaction().rollback();
+    return;
+  }catch(const std::exception& er){
+    m_session->transaction().rollback() ;
+    throw cond::Exception( std::string("MetaData::deleteEntryByTag: " )+er.what() );
+  }catch(...){
+    m_session->transaction().rollback() ;
+    throw cond::Exception( "MetaData::deleteEntryByTag: unknown exception ");
   }
 }

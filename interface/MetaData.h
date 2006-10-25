@@ -21,6 +21,9 @@ namespace cond{
     bool hasTag( const std::string& name ) const;
     void listAllTags( std::vector<std::string>& result ) const;
     const std::string getToken( const std::string& name );
+    void deleteAllEntries();
+    void deleteEntryByToken( const std::string& token );
+    void deleteEntryByTag( const std::string& tag );
   private:
     void createTable(const std::string& tabname);
     std::string m_con;
