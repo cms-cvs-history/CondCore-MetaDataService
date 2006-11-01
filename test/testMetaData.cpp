@@ -2,19 +2,21 @@
 #include "CondCore/DBCommon/interface/ServiceLoader.h"
 #include "CondCore/DBCommon/interface/Exception.h"
 #include "CondCore/MetaDataService/interface/MetaData.h"
-//#include "SealKernel/Exception.h"
+#include "SealKernel/IMessageService.h"
 #include <string>
 #include <vector>
+#include <iterator>
 #include <algorithm>
 #include <iostream>
 int main(){
-  cond::ServiceLoader* loader=new cond::ServiceLoader;
   ::putenv("CORAL_AUTH_USER=cms_xiezhen_dev");
   ::putenv("CORAL_AUTH_PASSWORD=xiezhen123");
-  loader->loadAuthenticationService(cond::Env);
-  loader->loadMessageService(cond::Error);
+  //loader->loadAuthenticationService(cond::Env);
   try{
-    cond::MetaData metadata_svc("sqlite_file:pippo.db", *loader);
+    cond::MetaData metadata_svc("sqlite_file:pippo.db");
+    seal::IHandle<seal::IMessageService> iHandle =
+      metadata_svc.context()->query<seal::IMessageService>( "SEAL/Services/MessageService" ); 
+    iHandle->setOutputLevel(seal::Msg::Debug);
     //cond::MetaData metadata_svc("oracle://devdb10/cms_xiezhen_dev", *loader);
     metadata_svc.connect();
     //metadata_svc.getToken("mytest2");
@@ -47,7 +49,7 @@ int main(){
   }catch(...){
     std::cout<<"Funny error"<<std::endl;
   }
-  delete loader;
+  //delete loader;
 }
 
 

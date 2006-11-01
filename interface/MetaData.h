@@ -5,14 +5,18 @@
 #include <vector>
 #include "CondCore/DBCommon/interface/ConnectMode.h"
 #include "RelationalAccess/ISession.h"
+namespace seal{
+  class Context;
+}
 namespace coral{
-  class IRelationalService;
+  class ISessionProxy;
 }
 namespace cond{
   class ServiceLoader;
   class MetaData {
   public:
-    MetaData(const std::string& contact, ServiceLoader& loader);
+    explicit MetaData( const std::string& contact);
+    MetaData(const std::string& contact, seal::Context* context);
     ~MetaData();
     void connect( cond::ConnectMode mod=cond::ReadWriteCreate );
     void disconnect();
@@ -24,12 +28,19 @@ namespace cond{
     void deleteAllEntries();
     void deleteEntryByToken( const std::string& token );
     void deleteEntryByTag( const std::string& tag );
+    seal::Context* context();
   private:
+    void init();
     void createTable(const std::string& tabname);
+    /// The service loader
+    cond::ServiceLoader* m_loader;
+    /// The connection string
     std::string m_con;
-    coral::ISession* m_session;
-    ServiceLoader& m_loader;
-    coral::IRelationalService* m_service;
+    /// The "service" context
+    seal::Context* m_context;
+    /// The session object in use
+    coral::ISessionProxy* m_sessionProxy;
+    /// connection mode
     cond::ConnectMode m_mode;
   };
 }
