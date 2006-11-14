@@ -1,5 +1,6 @@
 #include "CondCore/DBCommon/interface/RelationalStorageManager.h"
 #include "CondCore/DBCommon/interface/SessionConfiguration.h"
+#include "CondCore/DBCommon/interface/ConnectionConfiguration.h"
 #include "CondCore/DBCommon/interface/DBSession.h"
 #include "CondCore/DBCommon/interface/Exception.h"
 #include "CondCore/MetaDataService/interface/MetaData.h"
@@ -14,7 +15,8 @@ int main(){
   ::putenv("CORAL_AUTH_PASSWORD=xiezhen123");
   try{
     cond::DBSession* session=new cond::DBSession("sqlite_file:pippo.db");
-    session->sessionConfiguration().setMessageLevel(cond::Error);
+    session->sessionConfiguration().setMessageLevel(cond::Debug);
+    session->connectionConfiguration().setConnectionTimeOut(0);
     session->open(true);
     cond::RelationalStorageManager& coraldb=session->relationalStorageManager();
     cond::MetaData metadata_svc(coraldb);
@@ -30,6 +32,8 @@ int main(){
     metadata_svc.addMapping("mytest2",t2);
     coraldb.commit();
     coraldb.disconnect();
+    std::cout<<"clean up idle connections"<<std::endl;
+    session->purgeConnections();
     coraldb.connect(cond::ReadOnly);
     coraldb.startTransaction(true);
     std::string tok1=metadata_svc.getToken("mytest2");
