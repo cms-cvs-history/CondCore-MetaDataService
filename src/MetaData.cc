@@ -93,7 +93,7 @@ const std::string cond::MetaData::getToken( const std::string& name ){
       iovtoken=row[ cond::MetaDataNames::tokenColumn() ].data<std::string>();
     }
   }catch(const coral::TableNotExistingException& er){
-    m_coraldb.commit();
+    //m_coraldb.commit();
     return "";
   }catch(const std::exception& er){
 
