@@ -14,11 +14,11 @@ int main(){
   ::putenv("CORAL_AUTH_USER=cms_xiezhen_dev");
   ::putenv("CORAL_AUTH_PASSWORD=xiezhen123");
   try{
-    cond::DBSession* session=new cond::DBSession("sqlite_file:pippo.db");
+    cond::DBSession* session=new cond::DBSession(true);
     session->sessionConfiguration().setMessageLevel(cond::Debug);
     session->connectionConfiguration().setConnectionTimeOut(0);
-    session->open(true);
-    cond::RelationalStorageManager& coraldb=session->relationalStorageManager();
+    session->open();
+    cond::RelationalStorageManager coraldb("sqlite_file:pippo.db",session);
     cond::MetaData metadata_svc(coraldb);
     std::string t1("token1");
     coraldb.connect(cond::ReadWriteCreate);
@@ -33,7 +33,7 @@ int main(){
     coraldb.commit();
     coraldb.disconnect();
     std::cout<<"clean up idle connections"<<std::endl;
-    session->purgeConnections();
+    //session->purgeConnections();
     coraldb.connect(cond::ReadOnly);
     coraldb.startTransaction(true);
     std::string tok1=metadata_svc.getToken("mytest2");
